@@ -1,0 +1,254 @@
+app.js
+const express = require('express')
+// import express from 'express' es6
+const app = express()
+
+app.get('/', (req, res) => {
+    res.send('hello world')
+})
+
+app.get('api/courses', (req, res) => {
+    res.send([1,2,4,])
+})
+
+app.listen(3000, () => console.log('listening on port 3000...'))
+
+npm i -g nodemon
+
+environment variables
+npm i dotenv
+
+.env
+PORT = 5000
+
+app.js
+require('dotenv').config()
+
+const app = express()
+
+
+app.get('/', (req, res) => {
+    res.send('hello world')
+});
+
+app.get('/api/courses', (req, res) => {
+    res.send([1,2,5]);
+});
+
+// 
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`listening on port ${port}...`))
+
+
+route params
+app.get('/api/customer/:id', (req, res) => {
+    res.send(req.params.id)
+    // res.status(200).send(req.query.name)
+})
+
+http get request
+
+const customers = [
+    { id: 1, name: 'john'},
+    { id: 2, name: 'mike'},
+    { id: 3, name: 'bron'},
+    
+]
+app.get('/api/customer/:id', (req, res) => {
+    // res.send(req.params.id)
+    // res.status(200).send(req.query.name)
+    // const customer = customers.find(c => c.id === parseInt(req.params.id))
+    const customer = customers.find(c => { 
+        console.log(c)
+        return c.id === parseInt(req.params.id) 
+    })
+    if (!customer) res.status(404).send('customer not found')
+    res.send(customer)
+})
+
+post request
+app.post('/api/customers',(req, res)=> {
+    const customer = {
+        id: customers.length + 1,
+        name: req.body.name
+    }
+    customers.push(customer)
+    res.send(customer)
+})
+
+app.use(express.json())
+
+send json
+{
+	"name": "kobe"
+}
+
+npm i joi
+
+const schema = Joi.object( {
+    name: Joi.string().min(3).required()
+})
+app.post('/api/customers',(req, res)=> {
+    const result = schema.validate(req.body)
+    console.log(result)
+    if (result.error) {
+        // res.status(400).send(result.error)
+        res.status(400).send(result.error.details[0].message)
+        return;
+    }
+    const customer = {
+        id: customers.length + 1,
+        name: req.body.name
+    }
+    customers.push(customer)
+    res.send(customer)
+})
+
+function validateCustomer(customer) {
+    const schema = Joi.object( {
+        name: Joi.string().min(3).required()
+    })
+    return schema.validate(customer)
+}
+
+app.put('/api/customer/:id', (req, res) => {
+    const customer = customers.find(c => c.id === parseInt(req.params.id))
+    if (!customer) res.status(404).send('Customer not found')
+
+    const result = validateCustomer(req.body)
+    if (result.error) {
+        res.status(400).send(result.error.details[0].message)
+        return
+    }
+
+    customer.name = req.body.name
+    res.send(customer)
+})
+
+object destructure
+
+const { error } = validateCustomer(req.body)
+if (error) {
+            res.status(400).send(error.details[0].message)
+            return
+        }
+delete customer
+app.delete('api/customer/:id', (req, res) => {
+    const customer = customers.find(c => c.id === parseInt(req.params.id))
+    if (!customer) return res.status(404).send('Customer not found')
+
+    const index = customers.indexOf(course)
+    customers.splice(index, 1)
+    res.send(customer)
+})
+
+npm i mysql
+var con = mysql.createConnection({
+    host: process.env.HOST,
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE
+});
+
+.env
+PORT=5000
+HOST=localhost
+USER= root 
+PASSWORD=    
+DATABASE=db_sales
+
+app.get('/api/items', (req, res) => {
+    let sql = `SELECT * FROM item`;
+    con.query(sql, (error, results, fields) => {
+        if (error) {
+          return console.error(error.message);
+        }
+        
+        console.log(results);
+        return res.status(200).json(results);
+      });
+    
+    
+});
+
+
+const mysql = require('mysql');
+var con = mysql.createConnection({
+    host: process.env.HOST,
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    database: process.env.DATABASE
+});
+
+con.connect(function (err) {
+    if (err) {
+        return console.error('error: ' + err.message);
+    }
+
+    console.log('Connected to the MySQL server.');
+});
+
+module.exports = con
+
+const express = require('express');
+const router = express.Router();
+const con = require('../connectMySQL');
+
+API_URL= /api/v1
+
+app.js
+const itemRoutes = require("./routes/item");
+
+app.use(`${api}/items`, itemRoutes);
+
+item.js
+const FILE_TYPE_MAP = {
+    'image/png': 'png',
+    'image/jpeg': 'jpeg',
+    'image/jpg': 'jpg'
+};
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        const isValid = FILE_TYPE_MAP[file.mimetype];
+        let uploadError = new Error('invalid image type');
+
+        if (isValid) {
+            uploadError = null;
+        }
+        cb(uploadError, 'public/uploads');
+    },
+    filename: function (req, file, cb) {
+        const fileName = file.originalname.split(' ').join('-');
+        const extension = FILE_TYPE_MAP[file.mimetype];
+        cb(null, `${fileName}-${Date.now()}.${extension}`);
+    }
+});
+
+const uploadOptions = multer({ storage: storage });
+
+router.post('/', uploadOptions.single('uploads'), (req, res) => {
+
+    const file = req.file;
+    
+    // console.log(req.file)
+    if (!file) return res.status(400).send('No image in the request');
+
+    const fileName = file.filename;
+    const basePath = `${req.protocol}://${req.get('host')}/public/uploads/`;
+    let img_path = `${basePath}${fileName}`
+    let sql = `INSERT INTO item(description, sell_price, cost_price, img_path) VALUES(?,?,?,?)`;
+    console.log(fileName, sql)
+    con.query(sql, [req.body.description, req.body.sell_price, req.body.cost_price, img_path], (error, results, fields) => {
+        if (error) {
+            
+            return console.error(error.message);
+        }
+       
+        return res.status(200).json(results)
+    });
+
+app.use("/public/uploads", express.static(__dirname + "/public/uploads"));
+
+    // 
+});
