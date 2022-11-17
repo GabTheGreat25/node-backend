@@ -3,6 +3,7 @@ const Joi = require("joi");
 const mysql = require("mysql");
 const cors = require("cors");
 const itemRoutes = require("./routes/item");
+const orderRoutes = require("./routes/order");
 
 require("dotenv").config();
 var api = process.env.API_URL;
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use(cors());
 app.use(`${api}/items`, itemRoutes);
 app.use("/public/uploads", express.static(__dirname + "/public/uploads"));
+app.use(`${api}/orders`, orderRoutes);
 
 const customers = [
   { id: 1, name: "john" },
